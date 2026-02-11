@@ -57,7 +57,8 @@ modules:
       commands:
         - npm install
         - npm run build:cf
-      supported-platforms: []
+      supported-platforms:
+        []
 
   - name: visitors
     type: html5
@@ -68,7 +69,8 @@ modules:
       commands:
         - npm install
         - npm run build:cf
-      supported-platforms: []
+      supported-platforms:
+        []
 
   # App UI content deployer module
   # Uploads the static content of the HTML5 application and deploys it to the HTML5 repository
@@ -138,7 +140,8 @@ modules:
     properties:
       TENANT_HOST_PATTERN: '^(.*).${default-uri}'
       # prettier-ignore
-      httpHeaders: "[{ \"Content-Security-Policy\": \"default-src 'self' https://sapui5.hana.ondemand.com; frame-ancestors 'self' https://*.hana.ondemand.com; object-src 'none';\"}]"
+      httpHeaders: "[{ \"Content-Security-Policy\": \"default-src 'self' https://sapui5.hana.ondemand.com; frame-ancestors 'self'
+        https://*.hana.ondemand.com; object-src 'none';\"}]"
       CORS:
         - uriPattern: .*
           allowedOrigin:
