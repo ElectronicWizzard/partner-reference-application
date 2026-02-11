@@ -19,7 +19,7 @@ build-parameters:
         # [Workzone] Create resources folder and copy cdm.json
         - mkdir -p resources
         - cp workzone/cdm.json resources/cdm.json
-        - npx -p @sap/cds-dk cds build --production
+        - npx -p @sap/cds-dk@9.6.1 cds build --production
 
 # -------------------------------------------------------------------------
 #  Modules that are required to deploy the application
@@ -35,8 +35,12 @@ modules:
       - name: poetry-slams-auth
       - name: poetry-slams-db
       - name: poetry-slams-destination
+      - name: partner-reference-application-auth
     provides:
       - name: poetry-slams-srv-api # required by consumers of CAP services (e.g. approuter)
+        properties:
+          srv-url: ${default-url}
+      - name: srv-api # required by consumers of CAP services (e.g. approuter)
         properties:
           srv-url: ${default-url}
     parameters:
@@ -57,7 +61,8 @@ modules:
       commands:
         - npm install
         - npm run build:cf
-      supported-platforms: []
+      supported-platforms:
+        []
 
   - name: visitors
     type: html5
@@ -68,7 +73,8 @@ modules:
       commands:
         - npm install
         - npm run build:cf
-      supported-platforms: []
+      supported-platforms:
+        []
 
   # App UI content deployer module
   # Uploads the static content of the HTML5 application and deploys it to the HTML5 repository
@@ -138,7 +144,8 @@ modules:
     properties:
       TENANT_HOST_PATTERN: '^(.*).${default-uri}'
       # prettier-ignore
-      httpHeaders: "[{ \"Content-Security-Policy\": \"default-src 'self' https://sapui5.hana.ondemand.com; frame-ancestors 'self' https://*.hana.ondemand.com; object-src 'none';\"}]"
+      httpHeaders: "[{ \"Content-Security-Policy\": \"default-src 'self' https://sapui5.hana.ondemand.com; frame-ancestors 'self'
+        https://*.hana.ondemand.com; object-src 'none';\"}]"
       CORS:
         - uriPattern: .*
           allowedOrigin:
@@ -159,6 +166,7 @@ modules:
       - name: poetry-slams-auth
       - name: poetry-slams-html5-runtime
       - name: poetry-slams-destination
+      - name: partner-reference-application-auth
     provides:
       - name: app-api
         properties:
@@ -176,6 +184,7 @@ modules:
     parameters:
       memory: 256M
       disk-quota: 512M
+      instances: 1
     provides:
       - name: mtx-api
         properties:
@@ -189,6 +198,18 @@ modules:
       - name: app-api
         properties:
           SUBSCRIPTION_URL: ~{app-protocol}://\${tenant_subdomain}.~{app-uri}
+      - name: partner-reference-application-auth
+    hooks:
+      - name: upgrade-all
+        type: task
+        phases:
+          - blue-green.application.before-start.idle
+          - deploy.application.before-start
+        parameters:
+          name: upgrade
+          memory: 512M # increase as required
+          disk-quota: 768M # increase as required
+          command: cds-mtx upgrade '*'
 
 # -------------------------------------------------------------------------
 # Resources/Services that are required to run the deployed application
@@ -291,3 +312,29 @@ resources:
     parameters:
       service: html5-apps-repo
       service-plan: app-runtime
+  - name: partner-reference-application-auth
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: xsuaa
+      service-plan: application
+      path: ./xs-security.json
+      config:
+        xsappname: partner-reference-application-${org}-${space}
+        tenant-mode: shared
+        oauth2-configuration:
+          credential-types:
+            - "binding-secret"
+            - "x509"
+          redirect-uris:
+            - https://*~{app-api/app-uri}/**
+        role-collections:
+          - name: 'PoetrySlamFull (partner-reference-application ${org}-${space})'
+            description: 'generated'
+            role-template-references:
+              - '$XSAPPNAME.PoetrySlamFull'
+          - name: 'PoetrySlamRestricted (partner-reference-application ${org}-${space})'
+            description: 'generated'
+            role-template-references:
+              - '$XSAPPNAME.PoetrySlamRestricted'
+    requires:
+      - name: app-api

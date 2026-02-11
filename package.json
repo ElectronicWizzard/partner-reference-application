@@ -18,16 +18,19 @@
     "@sap/cds": "^9.4.4",
     "@sap/cds-common-content": "^3.0.1",
     "@sap/cds-mtxs": "^3.4.3",
-    "@sap/xssec": "^4.11.0",
+    "@sap/xssec": "^4",
     "express": "^4.21.2",
     "rimraf": "^6.0.1"
   },
   "devDependencies": {
+    "@cap-js/cap-operator-plugin": "^0.12.1",
     "@cap-js/cds-test": "^0.4.0",
     "@cap-js/sqlite": "^2.0.4",
     "@sap/cds-dk": "^9.4.2",
-    "@sap/ux-specification": "^1.136.9",
     "@sap/eslint-plugin-cds": "^4.1.0",
+    "@sap/ux-specification": "^1.136.9",
+    "cross-env": "^10.1.0",
+    "cross-var": "^1.1.0",
     "mocha": "^11.7.4",
     "sinon": "^21.0.0"
   },
@@ -38,6 +41,14 @@
     "undeploy": "cf undeploy poetry-slams --delete-services --delete-service-keys --delete-service-brokers",
     "build": "rimraf resources mta_archives && mbt build --mtar archive",
     "deploy": "cf deploy mta_archives/archive.mtar -f --retries 1",
+    "dbuild:srv": "cross-env DOCKER_BUILDKIT=1 cross-var docker build -t $IMAGE_PREFIX/prasrv:$IMAGE_TAG --platform=linux/amd64 --no-cache  . -f Dockerfile",
+    "dbuild:router": "cross-env DOCKER_BUILDKIT=1 cross-var docker build -t $IMAGE_PREFIX/prarouter:$IMAGE_TAG --platform=linux/amd64 --no-cache  ./app/router -f ./app/router/Dockerfile",
+    "dbuild:html": "cross-env DOCKER_BUILDKIT=1 cross-var docker build -t $IMAGE_PREFIX/prahtml:$IMAGE_TAG --platform=linux/amd64 --no-cache  ./app -f ./app/Dockerfile",
+    "dbuild:all": "npm run dbuild:srv && npm run dbuild:router && npm run dbuild:html",
+    "dpush:srv": "cross-var docker push $IMAGE_PREFIX/prasrv:$IMAGE_TAG",
+    "dpush:router": "cross-var docker push $IMAGE_PREFIX/prarouter:$IMAGE_TAG",
+    "dpush:html": "cross-var docker push $IMAGE_PREFIX/prahtml:$IMAGE_TAG",
+    "dpush:all": "npm run dpush:srv && npm run dpush:router && npm run dpush:html",
     "test": "mocha",
     "eslint": "eslint ."
   },
@@ -61,7 +72,8 @@
         }
       },
       "[production]": {
-        "multitenancy": true
+        "multitenancy": true,
+        "auth": "xsuaa"
       }
     },
     "hana": {

@@ -1,0 +1,27 @@
+serviceInstances:
+  saasRegistry:
+    parameters:
+      xsappname: pra
+      appName: pra
+      displayName: pra
+      description: SAP Partner Reference Application Version 2.0
+      appUrls:
+        getDependencies: https://kymapra.pra.c-4c08d09.kyma.ondemand.com/callback/v1.0/dependencies
+        onSubscription: https://cap-op.c-4c08d09.kyma.ondemand.com/provision/tenants/{tenantId}
+  xsuaa:
+    parameters:
+      xsappname: pra
+app:
+  domains:
+    primary: pra.c-4c08d09.kyma.ondemand.com
+    additionalDomainRefs: []
+  istioIngressGatewayLabels:
+    istio: ingressgateway
+    app: istio-ingressgateway
+btp:
+  globalAccountId: 8ec9195a-6924-45d2-94da-a5c798578808
+  provider:
+    subdomain: kymapra
+    tenantId: 4279d5e7-cfc0-4d73-bb77-3d50339a098e
+imagePullSecrets:
+  - regcred

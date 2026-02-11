@@ -1,0 +1,138 @@
+serviceInstances:
+  xsuaa:
+    name: partner-reference-application-uaa
+    serviceOfferingName: xsuaa
+    servicePlanName: broker
+    parameters:
+      xsappname: partner-reference-application
+      tenant-mode: shared
+      oauth2-configuration:
+        credential-types:
+          - binding-secret
+        redirect-uris: []
+  saasRegistry:
+    name: partner-reference-application-saas-registry
+    serviceOfferingName: saas-registry
+    servicePlanName: application
+    parameters:
+      plan: general
+      xsappname: partner-reference-application
+      appName: partner-reference-application
+      displayName: (partner-reference-application)
+      description: (SAP Partner Reference Application Version 2.0)
+      appUrls:
+        getDependencies: ""
+        onSubscription: ""
+        callbackTimeoutMillis: 300000
+        onSubscriptionAsync: true
+        onUnSubscriptionAsync: true
+      category: CAP
+  serviceManager:
+    name: partner-reference-application-service-manager
+    serviceOfferingName: service-manager
+    servicePlanName: container
+    parameters: {}
+serviceBindings:
+  xsuaa:
+    name: partner-reference-application-uaa-bind
+    serviceInstanceName: partner-reference-application-uaa
+    secretName: partner-reference-application-uaa-bind-secret
+    secretKey: credentials
+    parameters: {}
+  saasRegistry:
+    name: partner-reference-application-saas-registry-bind
+    serviceInstanceName: partner-reference-application-saas-registry
+    secretName: partner-reference-application-saas-registry-bind-secret
+    secretKey: credentials
+    parameters: {}
+  serviceManager:
+    name: partner-reference-application-service-manager-bind
+    serviceInstanceName: partner-reference-application-service-manager
+    secretName: partner-reference-application-service-manager-bind-secret
+    secretKey: credentials
+    parameters: {}
+app:
+  domains:
+    primary: c-4c08d09.kyma.ondemand.com
+    additionalDomainRefs: []
+  istioIngressGatewayLabels:
+    istio: ingressgateway
+    app: istio-ingressgateway
+btp:
+  globalAccountId: 8ec9195a-6924-45d2-94da-a5c798578808
+  provider:
+    subdomain: kymapra
+    tenantId: 4279d5e7-cfc0-4d73-bb77-3d50339a098e
+imagePullSecrets: []
+workloads:
+  appRouter:
+    name: app-router
+    labels:
+      sme.sap.com/app-type: partner-reference-application
+    consumedBTPServices:
+      - partner-reference-application-uaa-bind
+      - partner-reference-application-saas-registry-bind
+    deploymentDefinition:
+      type: Router
+      image: espchris/prarouter:0.0.1 
+      ports:
+        - name: router-port
+          port: 5000
+      env:
+        - name: TENANT_HOST_PATTERN 
+          value: "^(.*).{{ .Values.global.domain }}"
+        - name: destinations
+          value:  >
+              [
+                {
+                  "name": "poetry-slams-srv-api",
+                  "url": "http://srv:4004",
+                  "forwardAuthToken": true
+                },
+                {
+                  "name": "mtx-api",
+                  "url": "http://mtx-sidecar:4005",
+                  "forwardAuthToken": true
+                }
+              ]
+  server:
+    name: server
+    labels:
+      sme.sap.com/app-type: partner-reference-application
+    consumedBTPServices:
+      - partner-reference-application-uaa-bind
+      - partner-reference-application-saas-registry-bind
+      - partner-reference-application-service-manager-bind
+    deploymentDefinition:
+      type: CAP
+      image: espchris/prasrv:0.0.1 
+      env:
+        - name: CDS_ENV
+          value: production   
+        - name: CDS_CONFIG
+          value: '{"requires":{"cds.xt.DeploymentService":{"hdi": { "create": {"database_id": "bcc0a7f8-c968-4c66-8797-a82c233508e8"} }}}}'             
+  contentDeploy:
+    name: content-deploy
+    labels:
+      sme.sap.com/app-type: partner-reference-application
+    consumedBTPServices:
+      - partner-reference-application-uaa-bind
+    jobDefinition:
+      type: Content
+      image: espchris/prahtml:0.0.1 
+  tenantJob:
+    name: tenant-job
+    labels:
+      sme.sap.com/app-type: partner-reference-application
+    consumedBTPServices:
+      - partner-reference-application-uaa-bind
+      - partner-reference-application-saas-registry-bind
+      - partner-reference-application-service-manager-bind
+    jobDefinition:
+      type: TenantOperation
+      image: espchris/prasrv:0.0.1 
+      env:
+        - name: CDS_ENV
+          value: production   
+        - name: CDS_CONFIG
+          value: '{"requires":{"cds.xt.DeploymentService":{"hdi": { "create": {"database_id": "bcc0a7f8-c968-4c66-8797-a82c233508e8"} }}}}'             
