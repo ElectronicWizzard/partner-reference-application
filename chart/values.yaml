@@ -60,7 +60,9 @@ serviceInstances:
     name: poetry-slams-db
     serviceOfferingName: service-manager
     servicePlanName: container
-    parameters: {}
+    parameters: 
+      acquireTimeoutMillis: max
+      polling_timeout_seconds: 480
   html5AppsRepoAppRuntime:
     name: poetry-slams-html5-runtime
     serviceOfferingName: html5-apps-repo
@@ -105,16 +107,16 @@ serviceBindings:
     serviceInstanceName: poetry-slams-registry
 app:
   domains:
-    primary: null
+    primary: c-1aad737.kyma.ondemand.com
     additionalDomainRefs: []
   istioIngressGatewayLabels:
     istio: ingressgateway
     app: istio-ingressgateway
 btp:
-  globalAccountId: null
+  globalAccountId: 8ec9195a-6924-45d2-94da-a5c798578808
   provider:
-    subdomain: null
-    tenantId: null
+    subdomain: kymapra
+    tenantId: 4279d5e7-cfc0-4d73-bb77-3d50339a098e
 imagePullSecrets: []
 workloads:
   poetrySlamsSrv:
@@ -125,7 +127,20 @@ workloads:
       - poetry-slams-destination-bind
     deploymentDefinition:
       type: CAP
-      image: null
+      image: espchris/prasrv:0.0.3
+      securityContext: 
+        runAsUser: 1000
+      env:
+        - name: CDS_ENV
+          value: production
+        - name: CDS_CONFIG
+          value: '{"requires":{"cds.xt.DeploymentService":{"hdi": { "create": {"database_id": "bcc0a7f8-c968-4c66-8797-a82c233508e8"} }}}}'
+        - name: debugLevel
+          value: "mtx"
+      ports:
+          - name: srv-port
+            port: 4004
+            routerDestinationName: poetry-slams-srv-api
   poetrySlamsAppContent:
     name: poetry-slams-app-content
     consumedBTPServices:
@@ -133,15 +148,22 @@ workloads:
       - poetry-slams-html5-repo-host-bind
     jobDefinition:
       type: Content
-      image: null
-  poetrySlamsDestinationsContent:
-    name: poetry-slams-destinations-content
-    consumedBTPServices:
-      - poetry-slams-html5-runtime-bind
-      - poetry-slams-destination-bind
-    jobDefinition:
-      type: Content
-      image: null
+      image: espchris/prahtml:0.0.1 
+      env:
+        - name: EXIT_PROCESS_AFTER_UPLOAD
+          value: "true"
+        - name: ASYNC_UPLOAD
+          value: "true"
+        - name: PORT
+          value: "5000"
+#  poetrySlamsDestinationsContent:
+#    name: poetry-slams-destinations-content
+#    consumedBTPServices:
+#      - poetry-slams-html5-runtime-bind
+#      - poetry-slams-destination-bind
+    #jobDefinition:
+    #  type: Content
+    #  image: null
   poetrySlams:
     name: poetry-slams
     consumedBTPServices:
@@ -152,14 +174,7 @@ workloads:
       - poetry-slams-registry-bind
     deploymentDefinition:
       type: Router
-      image: null
-      env:
-        - name: httpHeaders
-          value: "[{ \"Content-Security-Policy\": \"default-src 'self'
-            https://sapui5.hana.ondemand.com; frame-ancestors 'self'
-            https://*.hana.ondemand.com; object-src 'none';\"}]"
-        - name: CORS
-          value: '[{"uriPattern":".*","allowedOrigin":[{"host":"*.${default-uri}","protocol":"https"}]}]'
+      image: espchris/prarouter:0.0.1 
   poetrySlamsMtx:
     name: poetry-slams-mtx
     consumedBTPServices:
@@ -170,4 +185,13 @@ workloads:
       - poetry-slams-html5-repo-host-bind
     jobDefinition:
       type: TenantOperation
-      image: null
+      image: espchris/pramtx:0.0.2
+      securityContext: 
+        runAsUser: 1000
+      env:
+        - name: CDS_ENV
+          value: production
+        - name: CDS_CONFIG
+          value: '{"requires":{"cds.xt.DeploymentService":{"hdi": { "create": {"database_id": "bcc0a7f8-c968-4c66-8797-a82c233508e8"} }}}}'
+        - name: debugLevel
+          value: "mtx"         

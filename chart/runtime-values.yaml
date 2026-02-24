@@ -1,0 +1,42 @@
+serviceInstances:
+  saasRegistryApplication:
+    parameters:
+      xsappname: pra
+      appName: pra
+      displayName: pra
+      description: SAP Partner Reference Application Version 2.0
+      appUrls:
+        getDependencies: https://kymapra.pra.c-1aad737.kyma.ondemand.com/callback/v1.0/dependencies
+        onSubscription: https://cap-op.c-1aad737.kyma.ondemand.com/provision/tenants/{tenantId}
+  xsuaaBroker:
+    parameters:
+      xsappname: pra
+app:
+  domains:
+    primary: pra.c-1aad737.kyma.ondemand.com
+    additionalDomainRefs: []
+  istioIngressGatewayLabels:
+    istio: ingressgateway
+    app: istio-ingressgateway
+btp:
+  globalAccountId: 8ec9195a-6924-45d2-94da-a5c798578808
+  provider:
+    subdomain: kymapra
+    tenantId: 4279d5e7-cfc0-4d73-bb77-3d50339a098e
+imagePullSecrets:
+  - regcred
+workloads:
+  poetrySlams:
+    name: poetry-slams
+    consumedBTPServices:
+      - poetry-slams-auth-bind
+      - poetry-slams-db-bind
+      - poetry-slams-destination-bind
+      - poetry-slams-html5-runtime-bind
+      - poetry-slams-registry-bind
+    deploymentDefinition:
+      type: Router
+      image: espchris/prarouter:0.0.1 
+      env:
+        - name: TENANT_HOST_PATTERN 
+          value: "^(.*).pra.c-1aad737.kyma.ondemand.com"
