@@ -1,0 +1,8 @@
+apiVersion: v2
+name: partner-reference-application
+description: Helm chart to deploy partner-reference-application using CAP Operator
+type: application
+version: 0.0.1
+appVersion: 2.4.0
+annotations:
+  app.kubernetes.io/managed-by: cap-operator-plugin

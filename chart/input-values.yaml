@@ -1,0 +1,7 @@
+appName: pra
+capOperatorSubdomain: cap-op
+clusterDomain: c-4a2c372.kyma.ondemand.com
+globalAccountId: 8ec9195a-6924-45d2-94da-a5c798578808
+providerSubdomain: prakyma
+tenantId: 21bf2fa9-4e01-4c47-93f1-e4fc8726c3cc
+imagePullSecret: regcred

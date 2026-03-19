@@ -1,0 +1,173 @@
+serviceInstances:
+  html5AppsRepoAppHost:
+    name: poetry-slams-html5-repo-host
+    serviceOfferingName: html5-apps-repo
+    servicePlanName: app-host
+    parameters: {}
+  destinationLite:
+    name: poetry-slams-destination
+    serviceOfferingName: destination
+    servicePlanName: lite
+    parameters:
+      init_data:
+        subaccount:
+          existing_destinations_policy: update
+          destinations:
+            - Name: poetry-slams-rt
+              Description: Runtime destination of the launchpad, required for workzone
+              Authentication: NoAuthentication
+              ProxyType: Internet
+              Type: HTTP
+              URL: https://${org}.launchpad.${default-domain}
+              CEP.HTML5ContentProvider: true
+              HTML5.DynamicDestination: true
+              HTML5.ForwardAuthToken: true
+            - Name: poetry-slams-srv-api
+              Description: Destination to access the poetry slams service module, required for
+                workzone
+              Authentication: NoAuthentication
+              ProxyType: Internet
+              Type: HTTP
+              URL: https://${org}-${space}-poetry-slams-srv.${default-domain}
+              HTML5.DynamicDestination: true
+              HTML5.ForwardAuthToken: true
+      HTML5Runtime_enabled: false
+  xsuaaBroker:
+    name: poetry-slams-auth
+    serviceOfferingName: xsuaa
+    servicePlanName: broker
+    parameters:
+      tenant-mode: shared
+      xsappname: poetry-slams-${org}-${space}
+  saasRegistryApplication:
+    name: poetry-slams-registry
+    serviceOfferingName: saas-registry
+    servicePlanName: application
+    parameters:
+      xsappname: poetry-slams-${org}-${space}
+      appName: poetry-slams-${org}-${space}
+      displayName: Poetry Slam Manager
+      description: Manage poetry slam events and bookings of artists and visitors.
+      category: Applications / Multi-Customer Partner Solutions
+      appUrls:
+        getDependencies: ~{mtx-api/mtx-url}/-/cds/saas-provisioning/dependencies
+        onSubscription: ~{mtx-api/mtx-url}/-/cds/saas-provisioning/tenant/{tenantId}
+        onSubscriptionAsync: true
+        onUnSubscriptionAsync: true
+        onUpdateDependenciesAsync: true
+        callbackTimeoutMillis: 300000
+  serviceManagerContainer:
+    name: poetry-slams-db
+    serviceOfferingName: service-manager
+    servicePlanName: container
+    parameters: {}
+  html5AppsRepoAppRuntime:
+    name: poetry-slams-html5-runtime
+    serviceOfferingName: html5-apps-repo
+    servicePlanName: app-runtime
+    parameters: {}
+serviceBindings:
+  poetrySlamsAuthBind:
+    name: poetry-slams-auth-bind
+    parameters: {}
+    secretKey: credentials
+    secretName: poetry-slams-auth-bind-secret
+    serviceInstanceName: poetry-slams-auth
+  poetrySlamsDbBind:
+    name: poetry-slams-db-bind
+    parameters: {}
+    secretKey: credentials
+    secretName: poetry-slams-db-bind-secret
+    serviceInstanceName: poetry-slams-db
+  poetrySlamsDestinationBind:
+    name: poetry-slams-destination-bind
+    parameters: {}
+    secretKey: credentials
+    secretName: poetry-slams-destination-bind-secret
+    serviceInstanceName: poetry-slams-destination
+  poetrySlamsHtml5RepoHostBind:
+    name: poetry-slams-html5-repo-host-bind
+    parameters: {}
+    secretKey: credentials
+    secretName: poetry-slams-html5-repo-host-bind-secret
+    serviceInstanceName: poetry-slams-html5-repo-host
+  poetrySlamsHtml5RuntimeBind:
+    name: poetry-slams-html5-runtime-bind
+    parameters: {}
+    secretKey: credentials
+    secretName: poetry-slams-html5-runtime-bind-secret
+    serviceInstanceName: poetry-slams-html5-runtime
+  poetrySlamsRegistryBind:
+    name: poetry-slams-registry-bind
+    parameters: {}
+    secretKey: credentials
+    secretName: poetry-slams-registry-bind-secret
+    serviceInstanceName: poetry-slams-registry
+app:
+  domains:
+    primary: null
+    additionalDomainRefs: []
+  istioIngressGatewayLabels:
+    istio: ingressgateway
+    app: istio-ingressgateway
+btp:
+  globalAccountId: null
+  provider:
+    subdomain: null
+    tenantId: null
+imagePullSecrets: []
+workloads:
+  poetrySlamsSrv:
+    name: poetry-slams-srv
+    consumedBTPServices:
+      - poetry-slams-auth-bind
+      - poetry-slams-db-bind
+      - poetry-slams-destination-bind
+    deploymentDefinition:
+      type: CAP
+      image: null
+  poetrySlamsAppContent:
+    name: poetry-slams-app-content
+    consumedBTPServices:
+      - poetry-slams-auth-bind
+      - poetry-slams-html5-repo-host-bind
+    jobDefinition:
+      type: Content
+      image: null
+  poetrySlamsDestinationsContent:
+    name: poetry-slams-destinations-content
+    consumedBTPServices:
+      - poetry-slams-html5-runtime-bind
+      - poetry-slams-destination-bind
+    jobDefinition:
+      type: Content
+      image: null
+  poetrySlams:
+    name: poetry-slams
+    consumedBTPServices:
+      - poetry-slams-auth-bind
+      - poetry-slams-db-bind
+      - poetry-slams-destination-bind
+      - poetry-slams-html5-runtime-bind
+      - poetry-slams-registry-bind
+    deploymentDefinition:
+      type: Router
+      image: null
+      env:
+        - name: httpHeaders
+          value: "[{ \"Content-Security-Policy\": \"default-src 'self'
+            https://sapui5.hana.ondemand.com; frame-ancestors 'self'
+            https://*.hana.ondemand.com; object-src 'none';\"}]"
+        - name: CORS
+          value: '[{"uriPattern":".*","allowedOrigin":[{"host":"*.${default-uri}","protocol":"https"}]}]'
+  poetrySlamsMtx:
+    name: poetry-slams-mtx
+    consumedBTPServices:
+      - poetry-slams-db-bind
+      - poetry-slams-auth-bind
+      - poetry-slams-registry-bind
+      - poetry-slams-destination-bind
+      - poetry-slams-html5-repo-host-bind
+    jobDefinition:
+      type: TenantOperation
+      image: null
