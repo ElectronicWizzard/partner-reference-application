@@ -44,9 +44,9 @@ serviceInstances:
     serviceOfferingName: saas-registry
     servicePlanName: application
     parameters:
-      xsappname: poetry-slams-${org}-${space}
-      appName: poetry-slams-${org}-${space}
-      displayName: Poetry Slam Manager
+      xsappname: ""
+      appName: ""
+      displayName: Kyma Poetry Slam Manager
       description: Manage poetry slam events and bookings of artists and visitors.
       category: Applications / Multi-Customer Partner Solutions
       appUrls:
@@ -105,16 +105,16 @@ serviceBindings:
     serviceInstanceName: poetry-slams-registry
 app:
   domains:
-    primary: null
+    primary: ""
     additionalDomainRefs: []
   istioIngressGatewayLabels:
     istio: ingressgateway
     app: istio-ingressgateway
 btp:
-  globalAccountId: null
+  globalAccountId: ""
   provider:
-    subdomain: null
-    tenantId: null
+    subdomain: ""
+    tenantId: ""
 imagePullSecrets: []
 workloads:
   poetrySlamsSrv:
@@ -125,7 +125,11 @@ workloads:
       - poetry-slams-destination-bind
     deploymentDefinition:
       type: CAP
-      image: null
+      image: espchris/prasrv:0.0.3
+      ports:
+        - name: srv-port
+          port: 4004
+          routerDestinationName: poetry-slams-srv-api   
   poetrySlamsAppContent:
     name: poetry-slams-app-content
     consumedBTPServices:
@@ -133,15 +137,22 @@ workloads:
       - poetry-slams-html5-repo-host-bind
     jobDefinition:
       type: Content
-      image: null
-  poetrySlamsDestinationsContent:
-    name: poetry-slams-destinations-content
-    consumedBTPServices:
-      - poetry-slams-html5-runtime-bind
-      - poetry-slams-destination-bind
-    jobDefinition:
-      type: Content
-      image: null
+      image: espchris/prahtml:0.0.1
+      env:
+        - name: EXIT_PROCESS_AFTER_UPLOAD
+          value: "true"
+        - name: ASYNC_UPLOAD
+          value: "true"
+        - name: PORT
+          value: "5000"  
+  #poetrySlamsDestinationsContent:
+  #  name: poetry-slams-destinations-content
+  #  consumedBTPServices:
+  #    - poetry-slams-html5-runtime-bind
+  #    - poetry-slams-destination-bind
+  #  jobDefinition:
+  #    type: Content
+  #    image: ""
   poetrySlams:
     name: poetry-slams
     consumedBTPServices:
@@ -152,14 +163,14 @@ workloads:
       - poetry-slams-registry-bind
     deploymentDefinition:
       type: Router
-      image: null
-      env:
-        - name: httpHeaders
-          value: "[{ \"Content-Security-Policy\": \"default-src 'self'
-            https://sapui5.hana.ondemand.com; frame-ancestors 'self'
-            https://*.hana.ondemand.com; object-src 'none';\"}]"
-        - name: CORS
-          value: '[{"uriPattern":".*","allowedOrigin":[{"host":"*.${default-uri}","protocol":"https"}]}]'
+      image: espchris/prarouter:0.0.1
+      #env:
+      #  - name: httpHeaders
+      #    value: "[{ \"Content-Security-Policy\": \"default-src 'self'
+      #      https://sapui5.hana.ondemand.com; frame-ancestors 'self'
+      #      https://*.hana.ondemand.com; object-src 'none';\"}]"
+#        - name: CORS
+#          value: '[{"uriPattern":".*","allowedOrigin":[{"host":"*.${default-uri}","protocol":"https"}]}]'
   poetrySlamsMtx:
     name: poetry-slams-mtx
     consumedBTPServices:
@@ -170,4 +181,4 @@ workloads:
       - poetry-slams-html5-repo-host-bind
     jobDefinition:
       type: TenantOperation
-      image: null
+      image: espchris/pramtx:0.0.2

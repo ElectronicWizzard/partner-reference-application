@@ -1,0 +1,27 @@
+serviceInstances:
+  saasRegistryApplication:
+    parameters:
+      xsappname: prakymacws
+      appName: prakymacws
+      displayName: Kyma Poetry Slam Manager
+      description: SAP Partner Reference Application Version 2.0
+      appUrls:
+        getDependencies: https://prakyma.prakymacws.c-4a2c372.kyma.ondemand.com/callback/v1.0/dependencies
+        onSubscription: https://cap-op.c-4a2c372.kyma.ondemand.com/provision/tenants/{tenantId}
+  xsuaaBroker:
+    parameters:
+      xsappname: prakymacws
+app:
+  domains:
+    primary: prakymacws.c-4a2c372.kyma.ondemand.com
+    additionalDomainRefs: []
+  istioIngressGatewayLabels:
+    istio: ingressgateway
+    app: istio-ingressgateway
+btp:
+  globalAccountId: 8ec9195a-6924-45d2-94da-a5c798578808
+  provider:
+    subdomain: prakyma
+    tenantId: 21bf2fa9-4e01-4c47-93f1-e4fc8726c3cc
+imagePullSecrets:
+  - regcred
