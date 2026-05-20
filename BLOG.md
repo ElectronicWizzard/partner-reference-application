@@ -1,6 +1,6 @@
 # Introduction
 
-In my previous Blog series I explained how to turn Kyma in to a native Runtime for Cloud Application Programming Model based solutions. In this blog I would like to show you now how you can add to a existing CAP application the required deployment artifacts. Therefore I will use the well known Partner Reference Application (PRA) which is a great example of a SaaS Mulititenant Solutions applicable for Partners and Customers.
+In my previous [Blog series](https://community.sap.com/t5/technology-blog-posts-by-sap/kyma-evolution-transforming-sap-kyma-into-a-tailor-made-saas-platform-for/ba-p/14317418) I explained how to turn Kyma in to a Cloud Native Runtime for Cloud Application Programming Model based solutions. In this blog I would like to show you now how you can add to a existing CAP application the required deployment artifacts. Therefore I will use the well known [Partner Reference Application (PRA)](https://github.com/SAP-samples/partner-reference-application) which is a great example of a SaaS Mulititenant Solutions applicable for Partners and Customers.
 
 # Prerequistes and preparation
 
@@ -18,7 +18,7 @@ In my previous Blog series I explained how to turn Kyma in to a native Runtime f
 
 ## Add Docker build to the PRA
 
-As Docker is meanwhile as well the recommended approach for Cloud Foundry deployment you might have already done this for you cf project, however we will need to add this to the PRA. Therefore you need to have Docker installed on your maschine and need to have access to a Docker Registry. 
+As Docker is meanwhile as well the recommended approach for Cloud Foundry deployment you might have already done this for you cf project. However we will need to add this to the PRA. Therefore you need to have Docker installed on your maschine and need to have access to a Docker Registry. 
 We need to create Dockerfiles for the following parts:
 1. The Application Approuter under folder app/router we add the [Dockerfile](./app/router/Dockerfile)
 2. The CAP MTXS application which will be used for the provider and subscriber tenant lifecycle operations we add the [Dockerfile](./mtx/Dockerfile)
@@ -31,23 +31,28 @@ We need to create Dockerfiles for the following parts:
     "copy": "shx mkdir -p ../html5-deployer/resources/ && shx cp -rf ./dist/*.zip ../html5-deployer/resources/"
 
 ```
-    and adding
+and adding
+
 ```
-    npm install shx -D in both application folders.
+    npm install shx -D 
 ```
 
-This will trigger the HTML5 content build and will copy the dist output to a folder which will be used to upload the conent to the HTML5 Repository.
-Adjust your package.json to add the commands for the dockerbuild 
+in both application folders.
+
+
+This will trigger the HTML5 content build and will copy the /dist folder output (result of the UI5 build) to a folder which will be used to upload the conent to the HTML5 Repository.
+
+Adjust your package.json to add the commands for the docker build. 
 ```
 npm install cross-env  -D
 npm install cross-var  -D
 ```
 
-Export the variables according to your setup to the environement before you run the docker scripts for build and push
+Export the variables according to your setup to the environement before you run the docker scripts for executing the build and push command
 
 Example windows powershell
 ```
-$Env:IMAGE_PREFIX = "espchris"
+$Env:IMAGE_PREFIX = "yourprefix"
 $Env:IMAGE_TAG = "0.0.1"
 ```
 Trigger the docker build and push and check if everything is running correctly.
@@ -66,7 +71,7 @@ Now you can use the CAP Operator plugins to create the necessary resources for t
 
 ### Create the HELM configuration files using the CAP Operator plugins 
 
-We will use the the **--with-configurable-templates** option to utilize template functions in the CAP Operator resources. In this version of the chart, all the CAP Operator resource configurations are defined in templates/cap-operator-cros.yaml. If you choose this option, you can skip the cds build step since the chart already contains the templates folder.
+We will use the the **--with-configurable-templates** option to utilize template functions in the CAP Operator resources. In this version of the chart all the CAP Operator resource configurations are defined in the file templates/cap-operator-cros.yaml. If you choose this option, you can skip the cds build step since the /chart folder already contains the templates folder.
 
 Before you create the template you currently need to adjust the package.json with the information that the project is using xsuaa for authentication as the plugin will use information from the package.json to create a draft for the template files.
 
@@ -77,7 +82,7 @@ Before you create the template you currently need to adjust the package.json wit
   }
 ```
 
-Execute cds add cap-operator --with-mta .\mta.yaml --with-templates from your root folder. This step will create a new folder chart in your project directory including the necessary files supporting templating containing serviceInstances, serviceBindings and workloads based on the existing mta which is still a experimental feature and has some gaps.
+Execute ```cds add cap-operator --with-mta .\mta.yaml --with-templates``` from your root folder. This step will create a new folder /chart in your project directory including the necessary files supporting templating containing serviceInstances, serviceBindings and workloads based on the existing mta which is still a experimental feature and has some gaps.
 
 As a first step we will add the images for the different workloads into the generated values.yaml file and will need to do a few changes to make the deployment working.
 
@@ -110,10 +115,14 @@ to create the required service instances, bindings and to deploy the application
 
 ## How to uninstall your application
 
-To uninstall your appliction use, however before doing this you need to delete all tenants and the cap application as the unistall will delete all service instance and will bring otherwise your deployment in a inconsistent state.
+To uninstall your appliction use, 
+
 ```
 helm uninstall -n pra pra 
 ```
+
+
+*However before doing this you need to delete all tenants/subscriptions and the cap application as the unistall will delete all service instance and will bring otherwise your deployment in a inconsistent state.*
 
 
 

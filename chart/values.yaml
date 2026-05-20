@@ -4,34 +4,34 @@ serviceInstances:
     serviceOfferingName: html5-apps-repo
     servicePlanName: app-host
     parameters: {}
-  destinationLite:
-    name: poetry-slams-destination
-    serviceOfferingName: destination
-    servicePlanName: lite
-    parameters:
-      init_data:
-        subaccount:
-          existing_destinations_policy: update
-          destinations:
-            - Name: poetry-slams-rt
-              Description: Runtime destination of the launchpad, required for workzone
-              Authentication: NoAuthentication
-              ProxyType: Internet
-              Type: HTTP
-              URL: https://${org}.launchpad.${default-domain}
-              CEP.HTML5ContentProvider: true
-              HTML5.DynamicDestination: true
-              HTML5.ForwardAuthToken: true
-            - Name: poetry-slams-srv-api
-              Description: Destination to access the poetry slams service module, required for
-                workzone
-              Authentication: NoAuthentication
-              ProxyType: Internet
-              Type: HTTP
-              URL: https://${org}-${space}-poetry-slams-srv.${default-domain}
-              HTML5.DynamicDestination: true
-              HTML5.ForwardAuthToken: true
-      HTML5Runtime_enabled: false
+  #destinationLite:
+  #  name: poetry-slams-destination
+  #  serviceOfferingName: destination
+  #  servicePlanName: lite
+  #  parameters:
+  #    init_data:
+  #      subaccount:
+  #        existing_destinations_policy: update
+  #        destinations:
+  #          - Name: poetry-slams-rt
+  #            Description: Runtime destination of the launchpad, required for workzone
+  #            Authentication: NoAuthentication
+  #            ProxyType: Internet
+  #            Type: HTTP
+  #            URL: https://${org}.launchpad.${default-domain}
+  #            CEP.HTML5ContentProvider: true
+  #            HTML5.DynamicDestination: true
+  #            HTML5.ForwardAuthToken: true
+  #          - Name: poetry-slams-srv-api
+  #            Description: Destination to access the poetry slams service module, required for
+  #              workzone
+  #            Authentication: NoAuthentication
+  #            ProxyType: Internet
+  #            Type: HTTP
+  #            URL: https://${org}-${space}-poetry-slams-srv.${default-domain}
+  #            HTML5.DynamicDestination: true
+  #            HTML5.ForwardAuthToken: true
+  #    HTML5Runtime_enabled: false
   xsuaaBroker:
     name: poetry-slams-auth
     serviceOfferingName: xsuaa
@@ -164,12 +164,12 @@ workloads:
     deploymentDefinition:
       type: Router
       image: espchris/prarouter:0.0.1
-      #env:
+      #env:   This part should work 
       #  - name: httpHeaders
       #    value: "[{ \"Content-Security-Policy\": \"default-src 'self'
       #      https://sapui5.hana.ondemand.com; frame-ancestors 'self'
       #      https://*.hana.ondemand.com; object-src 'none';\"}]"
-#        - name: CORS
+#        - name: CORS    Need tp replace the default-uri placeholder with the actual domain, but this is currently not supported by the operator
 #          value: '[{"uriPattern":".*","allowedOrigin":[{"host":"*.${default-uri}","protocol":"https"}]}]'
   poetrySlamsMtx:
     name: poetry-slams-mtx
